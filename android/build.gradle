@@ -50,6 +50,9 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.cardview:cardview:1.0.0'
+
     // Use either AndroidX library names or old/support library names based on major version of support lib
     def supportLibVersion = safeExtGet('supportLibVersion', '27.1.1')
     def supportLibMajorVersion = supportLibVersion.split('\\.')[0] as int

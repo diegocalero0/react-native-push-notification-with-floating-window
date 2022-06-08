@@ -16,6 +16,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -24,12 +25,20 @@ import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.text.Spanned;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
+
 import androidx.core.app.RemoteInput;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.text.HtmlCompat;
 
+import com.dieam.reactnativepushnotification.R;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
@@ -56,6 +65,8 @@ public class RNPushNotificationHelper {
     private Context context;
     private RNPushNotificationConfig config;
     private final SharedPreferences scheduledNotificationsPersistence;
+
+    private View floatView;
 
     public RNPushNotificationHelper(Application context) {
         this.context = context;
@@ -197,8 +208,115 @@ public class RNPushNotificationHelper {
       aggregator.setBigPictureUrl(context, bundle.getString("bigPictureUrl"));
     }
 
+    public void onClickButtonTake(View view) {
+        if(floatView != null) {
+            WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            windowManager.removeView(floatView);
+
+
+
+        }
+    }
+
+    public void showAlertDialog(Bundle bundle, String title, String description) {
+        String packageName = context.getPackageName();
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        floatView = ((LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.floating_windows_layout, null);
+        WindowManager.LayoutParams paramFloat = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            paramFloat = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+        } else {
+            paramFloat = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+        }
+
+        paramFloat.gravity = Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL;
+        floatView.setLeft(34);
+        floatView.setRight(34);
+        ((TextView)floatView.findViewById(R.id.textView_notificationText)).setText(title);
+        ((TextView)floatView.findViewById(R.id.textView_notificationDescription)).setText(description);
+        windowManager.addView(floatView, paramFloat);
+
+        JSONArray actionsArray = null;
+        try {
+            actionsArray = bundle.getString("actions") != null ? new JSONArray(bundle.getString("actions")) : null;
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "Exception while converting actions to JSON object.", e);
+        }
+
+        if (actionsArray != null) {
+            // No icon for now. The icon value of 0 shows no icon.
+            int icon = 0;
+
+            // Add button for each actions.
+            for (int i = 0; i < actionsArray.length(); i++) {
+                String action;
+                try {
+                    action = actionsArray.getString(i);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "Exception while getting action from actionsArray.", e);
+                    continue;
+                }
+
+                Class intentClass = getMainActivityClass();
+                Intent intent = new Intent(context, intentClass);
+                intent.setClass(context, getMainActivityClass());
+                intent.setAction(packageName + ".ACTION_" + i);
+                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+                // Add "action" for later identifying which button gets pressed.
+                bundle.putString("action", action);
+                intent.putExtra("notification", bundle);
+                intent.setPackage(packageName);
+
+                String messageId = bundle.getString("messageId");
+                String notificationIdString = bundle.getString("id");
+                if (notificationIdString == null) {
+                    Log.e(LOG_TAG, "No notification ID specified for the notification");
+                    return;
+                }
+                int notificationID = Integer.parseInt(notificationIdString);
+                if (messageId != null) {
+                    intent.putExtra("message_id", messageId);
+                }
+
+                int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;
+
+
+
+                if(i == 0) {
+                    ((Button)floatView.findViewById(R.id.button_take)).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            //PendingIntent pendingActionIntent = PendingIntent.getActivity(context, notificationID, actionIntent, flags);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                            notificationManager.cancel(notificationID);
+                            (context).startActivity(intent);
+                            onClickButtonTake(v);
+                        }
+                    });
+                }
+
+            }
+
+        }
+    }
+
     public void sendToNotificationCentreWithPicture(Bundle bundle, Bitmap largeIconBitmap, Bitmap bigPictureBitmap, Bitmap bigLargeIconBitmap) {
         try {
+
+            showAlertDialog(bundle, bundle.getString("title"), bundle.getString("message"));
+
             Class intentClass = getMainActivityClass();
             if (intentClass == null) {
                 Log.e(LOG_TAG, "No activity class found for the notification");
