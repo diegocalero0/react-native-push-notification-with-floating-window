@@ -59,6 +59,16 @@ import static com.dieam.reactnativepushnotification.modules.RNPushNotificationAt
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.KEY_TEXT_REPLY;
 
 public class RNPushNotificationHelper {
+
+    static public RNPushNotificationHelper instance;
+
+    public static RNPushNotificationHelper getInstance(Application context) {
+        if(instance == null) {
+            instance = new RNPushNotificationHelper(context);
+        }
+        return instance;
+    }
+
     public static final String PREFERENCES_KEY = "rn_push_notification";
     private static final long DEFAULT_VIBRATION = 300L;
 
@@ -91,6 +101,7 @@ public class RNPushNotificationHelper {
     }
 
     public void invokeApp(Bundle bundle) {
+        removeFloatingView();
         String packageName = context.getPackageName();
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
         String className = launchIntent.getComponent().getClassName();
@@ -209,12 +220,13 @@ public class RNPushNotificationHelper {
     }
 
     public void onClickButtonTake(View view) {
+        removeFloatingView();
+    }
+
+    private void removeFloatingView() {
         if(floatView != null) {
             WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             windowManager.removeView(floatView);
-
-
-
         }
     }
 

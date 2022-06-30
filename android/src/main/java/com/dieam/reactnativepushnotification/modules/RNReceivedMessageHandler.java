@@ -168,7 +168,7 @@ public class RNReceivedMessageHandler {
         Application applicationContext = (Application) context.getApplicationContext();
 
         RNPushNotificationConfig config = new RNPushNotificationConfig(mFirebaseMessagingService.getApplication());  
-        RNPushNotificationHelper pushNotificationHelper = new RNPushNotificationHelper(applicationContext);
+        RNPushNotificationHelper pushNotificationHelper = RNPushNotificationHelper.getInstance(applicationContext);
 
         boolean isForeground = pushNotificationHelper.isApplicationInForeground();
 

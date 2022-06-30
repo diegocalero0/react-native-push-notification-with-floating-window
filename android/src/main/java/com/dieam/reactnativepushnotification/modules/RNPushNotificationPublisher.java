@@ -38,7 +38,7 @@ public class RNPushNotificationPublisher extends BroadcastReceiver {
         }
 
         Application applicationContext = (Application) context.getApplicationContext();
-        RNPushNotificationHelper pushNotificationHelper = new RNPushNotificationHelper(applicationContext);
+        RNPushNotificationHelper pushNotificationHelper = RNPushNotificationHelper.getInstance(applicationContext);
         
         Log.v(LOG_TAG, "sendNotification: " + bundle);
 

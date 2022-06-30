@@ -63,7 +63,7 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
         Application applicationContext = (Application) reactContext.getApplicationContext();
 
         // The @ReactNative methods use this
-        mRNPushNotificationHelper = new RNPushNotificationHelper(applicationContext);
+        mRNPushNotificationHelper = RNPushNotificationHelper.getInstance(applicationContext);
         // This is used to delivery callbacks to JS
         mJsDelivery = new RNPushNotificationJsDelivery(reactContext);
     }

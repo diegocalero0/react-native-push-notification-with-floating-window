@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactInstanceManager;
@@ -19,6 +21,9 @@ import static com.dieam.reactnativepushnotification.modules.RNPushNotification.L
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.KEY_TEXT_REPLY;
 
 public class RNPushNotificationActions extends BroadcastReceiver {
+
+    private View floatView;
+    
     @Override
     public void onReceive(final Context context, Intent intent) {
       String intentActionPrefix = context.getPackageName() + ".ACTION_";
@@ -58,7 +63,7 @@ public class RNPushNotificationActions extends BroadcastReceiver {
 
       // Notify the action.
       if(invokeApp) {
-          RNPushNotificationHelper helper = new RNPushNotificationHelper((Application) context.getApplicationContext());
+          RNPushNotificationHelper helper = RNPushNotificationHelper.getInstance((Application) context.getApplicationContext());
 
           helper.invokeApp(bundle);
 
